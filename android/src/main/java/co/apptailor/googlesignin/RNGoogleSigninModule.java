@@ -44,19 +44,19 @@ public class RNGoogleSigninModule
     }
 
     @ReactMethod
-    public void init() {
+    public void init(String serverClientId) {
+        final String serverClientIdUi = serverClientId;
         _activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                System.out.println("YOUHOU");
-                System.out.println("API IS NULL " + _apiClient == null);
-
                 GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestServerAuthCode(serverClientIdUi, false)
                         .requestEmail()
+                        .requestProfile()
                         .build();
 
                 _apiClient = new GoogleApiClient.Builder(_activity.getBaseContext())
-//                        .enableAutoManage(_activity, RNGoogleSigninModule.this)
+//                        .enableAutoManage(_activity.getBaseContext(), _activity.getBaseContext())
                         .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                         .build();
                 _apiClient.connect();
@@ -128,9 +128,10 @@ public class RNGoogleSigninModule
 
         if (result.isSuccess()) {
             GoogleSignInAccount acct = result.getSignInAccount();
+            params.putString("userId", acct.getId());
             params.putString("name", acct.getDisplayName());
             params.putString("email", acct.getEmail());
-            params.putString("accessToken", acct.getIdToken());
+            params.putString("authCode", acct.getServerAuthCode());
 
             _context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                     .emit("googleSignIn", params);
